@@ -1,6 +1,7 @@
 import plotly.express as px
 import requests
 import pandas as pd
+import streamlit as st
 repo_url = 'https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json'
 # Archivo GeoJSON
 mx_regions_geo = requests.get(repo_url).json()
@@ -91,4 +92,4 @@ fig = px.choropleth(data_frame=df,
 
 fig.update_geos(showcountries=True, showcoastlines=True,
                 showland=True, fitbounds="locations")
-fig.show()
+st.write(fig.show())
