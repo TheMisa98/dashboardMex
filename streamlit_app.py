@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.graph_objects as go
 import requests
 import pandas as pd
 import streamlit as st
@@ -108,20 +109,24 @@ with col1:
 
 with col2:
     st.subheader("Mapa de calor de la población por estado en México")
-    st.plotly_chart(
-        px.choropleth(data_frame=df,
-                      geojson=mx_regions_geo,
-                      # nombre de la columna del Dataframe
-                      locations=df['estado'],
-                      # ruta al campo del archivo GeoJSON con el que se hará la relación (nombre de los estados)
-                      featureidkey="properties.name",
-                      # El color depende de las cantidades
-                      color=df['population'],
-                      color_continuous_scale="burg",
-                      # scope="north america"
-                      ).update_geos(showcountries=True, showcoastlines=True,
-                                    showland=True, fitbounds="locations"), use_container_width=True
-    )
+    fig_mapa = px.choropleth(data_frame=df,
+                              geojson=mx_regions_geo,
+                              # nombre de la columna del Dataframe
+                              locations=df['estado'],
+                              # ruta al campo del archivo GeoJSON con el que se hará la relación (nombre de los estados)
+                              featureidkey="properties.name",
+                              # El color depende de las cantidades
+                              color=df['population'],
+                              color_continuous_scale="burg",
+                              projection="stereographic"  # Cambia la proyección según lo deseado
+                              # scope="north america"
+                              ).update_geos(showcountries=True, showcoastlines=True,
+                                            showland=True, fitbounds="locations")
+
+    # Ajusta el tamaño del mapa
+    fig_mapa.update_layout(width=800, height=600)
+
+    st.plotly_chart(fig_mapa, use_container_width=True)
 
 # Mostrar tabla con los 10 estados más poblados y progresos de población
 st.subheader("Los 10 estados más poblados:")
@@ -138,3 +143,29 @@ for index, row in df_top10.iterrows():
 st.sidebar.title("Información")
 st.sidebar.subheader("Población Total")
 st.sidebar.write(f'{poblacion_total_millones} (millones)')
+
+# Crear un gráfico de barra circular para representar la población por estado
+fig_planet = go.Figure()
+
+# Agregar una barra para cada estado
+for index, row in df.iterrows():
+    fig_planet.add_trace(go.Barpolar(
+        r=[row['population']],
+        theta=[row['estado']],
+        name=row['estado'],
+        marker_color='rgb(106, 90, 205)'  # Color de la barra
+    ))
+# Establecer el tamaño y título del gráfico
+fig_planet.update_layout(
+    polar=dict(
+        radialaxis=dict(visible=True, showticklabels=False, showgrid=False),
+        angularaxis=dict(showticklabels=True, tickangle=45)
+    ),
+    title='Población por estado en México (en millones)',
+)
+
+# Mostrar el gráfico de barra circular
+st.plotly_chart(fig_planet, use_container_width=True)
+
+
+# ['airy', 'aitoff', 'albers', 'albers usa', 'august', 'azimuthal equal area', 'azimuthal equidistant', 'baker', 'bertin1953', 'boggs', 'bonne', 'bottomley', 'bromley', 'collignon', 'conic conformal', 'conic equal area', 'conic equidistant', 'craig', 'craster', 'cylindrical equal area', 'cylindrical stereographic', 'eckert1', 'eckert2', 'eckert3', 'eckert4', 'eckert5', 'eckert6', 'eisenlohr', 'equal earth', 'equirectangular', 'fahey', 'foucaut', 'foucaut sinusoidal', 'ginzburg4', 'ginzburg5', 'ginzburg6', 'ginzburg8', 'ginzburg9', 'gnomonic', 'gringorten', 'gringorten quincuncial', 'guyou', 'hammer', 'hill', 'homolosine', 'hufnagel', 'hyperelliptical', 'kavrayskiy7', 'lagrange', 'larrivee', 'laskowski', 'loximuthal', 'mercator', 'miller', 'mollweide', 'mt flat polar parabolic', 'mt flat polar quartic', 'mt flat polar sinusoidal', 'natural earth', 'natural earth1', 'natural earth2', 'nell hammer', 'nicolosi', 'orthographic', 'patterson', 'peirce quincuncial', 'polyconic', 'rectangular polyconic', 'robinson', 'satellite', 'sinu mollweide', 'sinusoidal', 'stereographic', 'times', 'transverse mercator', 'van der grinten', 'van der grinten2', 'van der grinten3', 'van der grinten4', 'wagner4', 'wagner6', 'wiechel', 'winkel tripel', 'winkel3']
