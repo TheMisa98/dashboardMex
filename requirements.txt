@@ -1,0 +1,4 @@
+strimlit
+plotly
+requests
+pandas
