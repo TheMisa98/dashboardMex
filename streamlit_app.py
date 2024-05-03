@@ -92,4 +92,5 @@ fig = px.choropleth(data_frame=df,
 
 fig.update_geos(showcountries=True, showcoastlines=True,
                 showland=True, fitbounds="locations")
-st.write(fig.show())
+# Mostrar gráfico en Streamlit
+st.plotly_chart(fig)
