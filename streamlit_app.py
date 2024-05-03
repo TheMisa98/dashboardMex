@@ -6,6 +6,9 @@ repo_url = 'https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHi
 # Archivo GeoJSON
 mx_regions_geo = requests.get(repo_url).json()
 
+# Establecer el ancho completo del dashboard
+st.set_page_config(layout="wide")
+
 data = {'estado': {
     1: "Aguascalientes",
     2: "Baja California",
@@ -75,22 +78,63 @@ data = {'estado': {
     32: 1622138
 }}
 
-df = pd.DataFrame({'estado': data['estado'].values(
-), 'population':   data['population'].values()})
+df = pd.DataFrame({'estado': data['estado'].values(), 'population':   data['population'].values()})
+# Calcular la población total
+poblacion_total = df['population'].sum()
 
-fig = px.choropleth(data_frame=df,
-                    geojson=mx_regions_geo,
-                    # nombre de la columna del Dataframe
-                    locations=df['estado'],
-                    # ruta al campo del archivo GeoJSON con el que se hará la relación (nombre de los estados)
-                    featureidkey="properties.name",
-                    # El color depende de las cantidades
-                    color=df['population'],
-                    color_continuous_scale="burg",
-                    # scope="north america"
-                    )
+# Formatear la población total para mostrarla en millones con un decimal
+poblacion_total_millones = "{:.1f}".format(poblacion_total / 1e6)
 
-fig.update_geos(showcountries=True, showcoastlines=True,
-                showland=True, fitbounds="locations")
-# Mostrar gráfico en Streamlit
-st.plotly_chart(fig)
+# Obtener los 10 estados más poblados
+df_top10 = df.nlargest(10, 'population')
+
+# Obtener el estado más poblado
+estado_mas_poblado = df.loc[df['population'].idxmax()]
+
+# Crear un gráfico de pastel para representar visualmente la población del estado más poblado
+fig_pie = px.pie(values=[estado_mas_poblado['population'], poblacion_total - estado_mas_poblado['population']],
+                 names=[estado_mas_poblado['estado'], 'Resto de estados'],
+                 hole=.9)
+fig_pie.update_traces(pull=[0.1, 0], hoverinfo="label+percent+name", marker=dict(colors=['blue', 'gray']))
+
+# Dividir el espacio horizontalmente
+col1, col2 = st.columns([1, 2])
+
+# Mostrar el gráfico de pastel y el mapa en columnas separadas
+with col1:
+    # Mostrar el estado más poblado como un KPI con una barra de progreso circular
+    st.subheader("Estado más poblado:")
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+with col2:
+    st.subheader("Mapa de calor de la población por estado en México")
+    st.plotly_chart(
+        px.choropleth(data_frame=df,
+                      geojson=mx_regions_geo,
+                      # nombre de la columna del Dataframe
+                      locations=df['estado'],
+                      # ruta al campo del archivo GeoJSON con el que se hará la relación (nombre de los estados)
+                      featureidkey="properties.name",
+                      # El color depende de las cantidades
+                      color=df['population'],
+                      color_continuous_scale="burg",
+                      # scope="north america"
+                      ).update_geos(showcountries=True, showcoastlines=True,
+                                    showland=True, fitbounds="locations"), use_container_width=True
+    )
+
+# Mostrar tabla con los 10 estados más poblados y progresos de población
+st.subheader("Los 10 estados más poblados:")
+for index, row in df_top10.iterrows():
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col1:
+        st.write(row['estado'])
+    with col2:
+        progress = st.progress(row['population'] / estado_mas_poblado["population"])
+    with col3:
+        st.write(f"{row['population']:,}")
+
+
+st.sidebar.title("Información")
+st.sidebar.subheader("Población Total")
+st.sidebar.write(f'{poblacion_total_millones} (millones)')
