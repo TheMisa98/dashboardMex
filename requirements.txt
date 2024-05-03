@@ -1,4 +1,5 @@
 strimlit
 plotly
+plotly.express
 requests
 pandas
