@@ -1,4 +1,4 @@
-strimlit
-plotly
-requests
+streamlit
 pandas
+altair
+plotly
